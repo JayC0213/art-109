@@ -9,11 +9,17 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'; // to co
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';  // to load 3D models
 
 
-// ~~~~~~~~~~~~~~~~Create scene here~~~~~~~~~~~~~~~~
-let scene, camera, renderer, cube, capGeometry, capMaterial, capTexture, capCamera, capsule;
+// ~~~~~~~~~~~~~~~~Declare Global Variables~~~~~~~~~~~~~~~~
+let scene, camera, renderer, ball, capGeometry, capMaterial, capTexture, capCamera, capsule, alien, mixer;
 
+// ~~~~~~~~~~~~~~~~Animation Variable~~~~~~~~~~~~~~~~
+
+let actionFlip;
+
+// ~~~~~~~~~~~~~~~~Create scene here~~~~~~~~~~~~~~~~
 function init() {
     scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x015220);
 
     const light = new THREE.DirectionalLight(0xffffff, 3);
     light.position.set(1,1,5);
@@ -32,44 +38,73 @@ function init() {
     const controls = new OrbitControls(camera, renderer.domElement);
     const loader = new GLTFLoader();
     loader.load('asset/alien_only_animation.gltf', function (gltf){
-        const alien = gltf.scene;
+        alien = gltf.scene;
         scene.add(alien);
-        alien.scale.set(1,1,1);
+        mixer = new THREE.AnimationMixer(alien);
+        const clips = gltf.animations;
+
+        const clipFlip = THREE.AnimationClip.findByName(clips, 'BACKFLIP');
+        actionFlip = mixer.clipAction(clipFlip);
+        // actionFlip.play();
+
+        alien.scale.set(.8,.8,.8);
+        alien.position.y = 0;
+        alien.position.x = 0;
+        alien.position.z = -100;
     });
     
     // BoxGeometry
-    const geometry = new THREE.BoxGeometry( 2, 2, 2 ); 
+    const geometry = new THREE.SphereGeometry(1, 32, 16); 
     const texture = new THREE.TextureLoader().load('textures/grasslight-big.jpg')
     const material = new THREE.MeshBasicMaterial({map: texture});
-    cube = new THREE.Mesh(geometry, material); 
-    scene.add(cube);
+    ball = new THREE.Mesh(geometry, material); 
+    scene.add(ball);
     
-    camera.position.z = 5;
-    camera.position.x = 5;
+    camera.position.z = 15;
+    camera.position.x = 0;
+    camera.position.y = 0;
 
-    // CylinderGeometry
-    capGeometry = new THREE.CapsuleGeometry( 1, 1, 4, 8 ); 
-    capTexture = new THREE.TextureLoader().load('textures/pipe-texture.jpg')
-    capMaterial = new THREE.MeshBasicMaterial({map: capTexture});
-    capsule = new THREE.Mesh( capGeometry, capMaterial );
-    scene.add(capsule);
+    // // CylinderGeometry
+    // capGeometry = new THREE.CapsuleGeometry( 1, 1, 4, 8 ); 
+    // capTexture = new THREE.TextureLoader().load('textures/pipe-texture.jpg')
+    // capMaterial = new THREE.MeshBasicMaterial({map: capTexture});
+    // capsule = new THREE.Mesh( capGeometry, capMaterial );
+    // scene.add(capsule);
 
-    capCamera.position.z = 5;
-    capCamera.position.x = 7;
+    // capCamera.position.z = 5;
+    // capCamera.position.x = 10;
 
 }
 
+const clock = new THREE.Clock();
 function animate() {
     requestAnimationFrame(animate);
 
-    // cube
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
+    // ball
+    ball.rotation.x += 0.01;
+    ball.rotation.y += 0.01;
 
-    // capsule
-    capsule.rotation.x += 0.05;
-    capsule.rotation.y += 0.05;
+    ball.position.y = -1;
 
+    ball.position.x = Math.sin(Date.now() / 5000) * 2;
+    ball.position.y = Math.sin(Date.now() / 3000) * 2;
+    ball.position.z = Math.sin(Date.now() / 4000) * 2;
+    // console.log(ball.position.x);
+
+    // // capsule
+    // capsule.rotation.x += 0.05;
+    // capsule.rotation.y += 0.05;
+
+    // alien
+    if(alien){
+        // alien.rotation.x += 0.001;
+        // alien.rotation.y += 0.001;
+        // alien.rotation.y = Math.sin(Date.now() / 4000) * 2;
+        alien.position.z = 15;
+    }
+
+    if(mixer)
+        mixer.update(clock.getDelta());
     renderer.render(scene, camera);
 }
 
@@ -80,6 +115,31 @@ function onWindowResize() {
 }
 
 window.addEventListener('resize', onWindowResize, false);
+
+// EVENT LISTENER
+
+let mouseIsDown = false;
+
+document.querySelector("body").addEventListener("mousedown", () => {
+    actionFlip.play();
+    actionFlip.paused = false;
+    mouseIsDown = true;
+    console.log("mousedown");
+})
+
+document.querySelector("body").addEventListener("mouseup", () => {
+    mouseIsDown = false;
+    actionFlip.paused = true;
+    console.log("mouseup");
+})
+
+document.querySelector("body").addEventListener("mousemove", () => {
+    if(mouseIsDown) {
+        console.log("mousemove");
+        ball.rotation.x += .5;
+    }
+})
+
 
 
 
