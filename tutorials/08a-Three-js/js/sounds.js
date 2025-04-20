@@ -5,6 +5,7 @@ let sound = document.querySelector("#sfx");
 
 playBtn.addEventListener('click', function() {
     song.play();
+    song.volume = 0.5;
 })
 
 playBtn2.addEventListener('click', function() {
